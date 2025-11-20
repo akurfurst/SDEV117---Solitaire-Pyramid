@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>Document</title>
+
+    <script>
+        //define variables
+        let deck = [];
+        let selected = [];
+        let deckIndex = 28;
+        let wastIndex;
+        const suits = ['♠', '♥', '♣', '♦'];
+        const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King', 'Ace'];
+
+        //scoring variables
+        const baseScoreMultiplier = 2;
+        let score = 1;
+        let streak = 1;
+
+
+        //create card class
+        class card {
+            constructor(rank, suit){
+                this.rank = rank;
+                this.suit = suit;
+                this.isPlayable = false;
+                this.isPlayed = false;
+            }
+            //toStirng to display on screen
+            toString(){
+                return this.rank + " " + this.suit;
+            }
+            //Grag the value of current card for calculation later
+            getValue() {
+                if (this.rank === 'Ace') return 1;
+                if (this.rank === 'Jack') return 11;
+                if (this.rank === 'Queen') return 12;
+                if (this.rank === 'King') return 13;
+                return parseInt(this.rank);
+            }
+        }
+        //function to set the deck
+        function setDeck(){
+            //loop through the size of ranks and size of suits to set all cards to the deck
+            for(i = 0; i < 4; i++){
+                for(x = 0; x < 13; x++){
+                    deck.push(new card(ranks[x], suits[i]))
+                }
+            }
+            //shuffle the deck
+            let num1, num2 = 0;
+            let temp;
+            for(let i = 0; i < 1000; i++){
+                num1 = Math.floor(Math.random() * 52);
+                num2 = Math.floor(Math.random() * 52);
+                temp = deck[num1];
+                deck[num1] = deck[num2];
+                deck[num2] = temp;
+                //console.log("(" + num1 + ", " + num2 + ")");
+            }
+            console.log("Deck is set:")
+            console.log(deck)
+        }
+        //this function starts the game by display the cards on the board and dispaying the top card on the deck
+        function start(){
+            //set the deck
+            setDeck();
+            //set the board
+            for(let i = 0; i < 28; i++){
+                document.getElementById("card" + (i + 1)).innerHTML = deck[i].toString();
+                document.getElementById("card" + (i + 1)).onclick = (function(index) {
+                    return function() {
+                        selectCard(index);
+                    };
+                })(i);
+                if(i >= 21){
+                    deck[i].isPlayable = true;
+                }
+            }
+            //flip the top of the deck
+            document.getElementById("deck").innerHTML = deck[deckIndex].toString();
+            deck[deckIndex].isPlayable = true;
+            document.getElementById("deck").onclick = function() {
+                    selectCard(deckIndex);
+            };
+        }
+        //function to select two cards
+        function selectCard(index){
+            if(!deck[index].isPlayable) return;
+            
+            // Determine the element ID (deck vs regular cards, or hand for waste)
+            let cardElementId;
+            if(index === deckIndex){
+                cardElementId = "deck";
+            } else if(index === wastIndex){
+                cardElementId = "hand";
+            } else {
+                cardElementId = "card" + (index + 1);
+            }
+            
+            if(deck[index].getValue() == 13) {
+                deck[index].isPlayed = true;
+                deck[index].isPlayable = false;
+                
+                // Handle pyramid cards
+                if(index < 28){
+                    document.getElementById(cardElementId).style.visibility = "hidden";
+                }
+                // Handle deck card
+                else if(index === deckIndex){
+                    let nextCard = findNextDeckCard();
+                    if(nextCard !== null){
+                        deckIndex = nextCard;
+                        deck[deckIndex].isPlayable = true;
+                        document.getElementById('deck').innerHTML = deck[deckIndex].toString();
+                        document.getElementById('deck').onclick = function() {
+                            selectCard(deckIndex);
+                        };
+                    } else {
+                        document.getElementById('deck').innerHTML = "Empty";
+                        document.getElementById('deck').onclick = null;
+                    }
+                }
+                // Handle waste pile card
+                else if(index === wastIndex){
+                    let prevCard = findPreviousWasteCard();
+                    if(prevCard !== null){
+                        wastIndex = prevCard;
+                        deck[wastIndex].isPlayable = true;
+                        document.getElementById('hand').innerHTML = deck[wastIndex].toString();
+                        document.getElementById('hand').onclick = function() {
+                            selectCard(wastIndex);
+                        };
+                    } else {
+                        document.getElementById('hand').innerHTML = "Hand";
+                        document.getElementById('hand').onclick = null;
+                    }
+                }
+                
+                checkPlayable();
+                streak++;
+                updateScore();
+                return;
+            }
+            if(selected.length < 2){
+                selected.push(index);
+                document.getElementById(cardElementId).classList.add("selected");
+            }
+            if(selected.length === 2) checkMatch();
+        }
+        //function to check if the two selected cards equal 13
+        function checkMatch(){
+            // Determine element IDs for both selected cards
+            let card1ElementId, card2ElementId;
+            
+            if(selected[0] === deckIndex){
+                card1ElementId = "deck";
+            } else if(selected[0] === wastIndex){
+                card1ElementId = "hand";
+            } else {
+                card1ElementId = "card" + (selected[0] + 1);
+            }
+            
+            if(selected[1] === deckIndex){
+                card2ElementId = "deck";
+            } else if(selected[1] === wastIndex){
+                card2ElementId = "hand";
+            } else {
+                card2ElementId = "card" + (selected[1] + 1);
+            }
+            
+            if(deck[selected[0]].getValue() + deck[selected[1]].getValue() === 13){
+                deck[selected[0]].isPlayed = true;
+                deck[selected[0]].isPlayable = false;
+                deck[selected[1]].isPlayed = true;
+                deck[selected[1]].isPlayable = false;
+                
+                // Handle each card based on its location
+                for(let i = 0; i < 2; i++){
+                    let index = selected[i];
+                    let elementId = (i === 0) ? card1ElementId : card2ElementId;
+                    
+                    // Pyramid card
+                    if(index < 28){
+                        document.getElementById(elementId).style.visibility = "hidden";
+                        document.getElementById(elementId).classList.remove("selected");
+                    }
+                    // Deck card
+                    else if(index === deckIndex){
+                        document.getElementById(elementId).classList.remove("selected");
+                        let nextCard = findNextDeckCard();
+                        if(nextCard !== null){
+                            deckIndex = nextCard;
+                            deck[deckIndex].isPlayable = true;
+                            document.getElementById('deck').innerHTML = deck[deckIndex].toString();
+                            document.getElementById('deck').onclick = function() {
+                                selectCard(deckIndex);
+                            };
+                        } else {
+                            document.getElementById('deck').innerHTML = "Empty";
+                            document.getElementById('deck').onclick = null;
+                        }
+                    }
+                    // Waste pile card
+                    else if(index === wastIndex){
+                        document.getElementById(elementId).classList.remove("selected");
+                        let prevCard = findPreviousWasteCard();
+                        if(prevCard !== null){
+                            wastIndex = prevCard;
+                            deck[wastIndex].isPlayable = true;
+                            document.getElementById('hand').innerHTML = deck[wastIndex].toString();
+                            document.getElementById('hand').onclick = function() {
+                                selectCard(wastIndex);
+                            };
+                        } else {
+                            document.getElementById('hand').innerHTML = "Hand";
+                            document.getElementById('hand').onclick = null;
+                        }
+                    }
+                }
+                
+                // Only update score and streak on successful match
+                checkPlayable();
+                streak++;
+                updateScore();
+                
+                if(deck[0].isPlayed) alert("You Win!");
+            } else {
+                // If no match remove highlighting from both cards
+                document.getElementById(card1ElementId).classList.remove("selected");
+                document.getElementById(card2ElementId).classList.remove("selected");
+            }
+            selected = [];
+        }
+        //helper function to find next available card in deck
+        function findNextDeckCard(){
+            let x = deckIndex + 1;
+            let startIndex = x;
+            
+            while(true){
+                if(x >= 52) x = 28;
+                if(x === startIndex && startIndex !== deckIndex + 1){
+                    return null; // No more cards
+                }
+                if(!deck[x].isPlayed){
+                    return x;
+                }
+                x++;
+            }
+        }
+        
+        //helper function to find previous card in waste pile
+        function findPreviousWasteCard(){
+            if(wastIndex === undefined) return null;
+            
+            let x = wastIndex - 1;
+            let startIndex = x;
+            
+            while(true){
+                if(x < 28) x = 51;
+                if(x === startIndex && startIndex !== wastIndex - 1){
+                    return null; 
+                }
+                if(!deck[x].isPlayed && x !== deckIndex){
+                    return x;
+                }
+                x--;
+            }
+        }
+        
+        //function that loops through the pyramid and checks if the card is still covered
+        function checkPlayable(){
+            //define what cards are being covered
+            const coveringCards = {
+                0: [1, 2],
+                1: [3, 4],
+                2: [4, 5],
+                3: [6, 7],
+                4: [7, 8],
+                5: [8, 9],
+                6: [10, 11],
+                7: [11, 12],
+                8: [12, 13],
+                9: [13, 14],
+                10: [15, 16],
+                11: [16, 17],
+                12: [17, 18],
+                13: [18, 19],
+                14: [19, 20], 
+                15: [21, 22],
+                16: [22, 23],
+                17: [23, 24],
+                18: [24, 25],
+                19: [25, 26],
+                20: [26, 27]
+            };
+            
+            // Check each card in the pyramid
+            for(let i = 0; i < 21; i++){
+                if(deck[i].isPlayed) continue;
+
+                let [left, right] = coveringCards[i];
+                if(deck[left].isPlayed && deck[right].isPlayed){
+                    deck[i].isPlayable = true;
+                } else {
+                    deck[i].isPlayable = false;
+                }
+            }
+        }
+        //draw function
+        function draw(){
+            // Reset streak when drawing a card
+            streak = 1;
+            
+            // Move current deck card to waste pile
+            deck[deckIndex].isPlayable = false;
+            wastIndex = deckIndex;
+            deck[wastIndex].isPlayable = true;
+            document.getElementById("hand").innerHTML = deck[wastIndex].toString();
+            document.getElementById("hand").onclick = function() {
+                selectCard(wastIndex);
+            };
+
+            let x = deckIndex + 1;
+            let startIndex = x;
+            
+            // Loop through the cards in the deck and change the top card to the first playable card
+            while(true){
+                if(x >= 52) x = 28;
+                if(x === startIndex && startIndex !== deckIndex + 1){
+                    alert("No more cards in deck!");
+                    return;
+                }
+                if(!deck[x].isPlayed){
+                    deckIndex = x;
+                    deck[deckIndex].isPlayable = true;
+                    document.getElementById('deck').innerHTML = deck[deckIndex].toString();
+                    document.getElementById('deck').onclick = function() {
+                        selectCard(deckIndex);
+                    };
+                    return;
+                }
+                x++;
+            }
+        }
+        //function to update the score
+        function updateScore(){
+            // Base points for a match
+            let basePoints = 10;
+            
+            // Bonus based on streak - uses square root for slower growth
+            // Streak 1: 0, Streak 2: 10, Streak 3: 17, Streak 5: 30, Streak 10: 52
+            let streakBonus = Math.floor(10 * Math.sqrt(streak - 1));
+            
+            // Add total points
+            let points = basePoints + streakBonus;
+            score += points;
+            
+            document.getElementById("score").innerHTML = "Score: " + Math.floor(score);
+            console.log("Streak: " + streak + ", Points: " + points);
+        }
+    </script>
+    </head>
+<body>
+    <div id="playerForm">
+        <form>
+            <label for="firstName">First Name:</label>
+            <input type="text" id="firstName"><br><br>
+            <label for="lastName">Last Name:</label>
+            <input type="text" id="lastName"></br><br>
+            <label for="username">Username : </label>
+            <input type="text" id="username"></br><br>
+            <input type="button" onclick="start()" value="Start Game">
+        </form>
+    </div>
+    <a href="scoreGraph.html">Daily High Score Graph</a>
+    <div id="playerInfoBar">
+        <h1 id="score">Score: 0</h1>
+        <h3 id="player">Player: ...</h3>
+        <h3>High Score: 0</h3>
+    </div>
+
+    <div id="row1" class="rows">
+        <div id="card1" class="card"></div>
+    </div>
+    <div id="row2" class="rows">
+        <div id="card2" class="card"></div>
+        <div id="card3" class="card"></div>
+    </div>
+    <div id="row3" class="rows">
+        <div id="card4" class="card"></div>
+        <div id="card5" class="card"></div>
+        <div id="card6" class="card"></div>
+    </div>
+    <div id="row4" class="rows">
+        <div id="card7" class="card"></div>
+        <div id="card8" class="card"></div>
+        <div id="card9" class="card"></div>
+        <div id="card10" class="card"></div>
+    </div>
+    <div id="row5" class="rows">
+        <div id="card11" class="card"></div>
+        <div id="card12" class="card"></div>
+        <div id="card13" class="card"></div>
+        <div id="card14" class="card"></div>
+        <div id="card15" class="card"></div>
+    </div>
+    <div id="row6" class="rows">
+        <div id="card16" class="card"></div>
+        <div id="card17" class="card"></div>
+        <div id="card18" class="card"></div>
+        <div id="card19" class="card"></div>
+        <div id="card20" class="card"></div>
+        <div id="card21" class="card"></div>
+    </div>
+    <div id="row7" class="rows">
+        <div id="card22" class="card"></div>
+        <div id="card23" class="card"></div>
+        <div id="card24" class="card"></div>
+        <div id="card25" class="card"></div>
+        <div id="card26" class="card"></div>
+        <div id="card27" class="card"></div>
+        <div id="card28" class="card"></div>
+    </div>
+
+    <div id="playRow">
+        <div class="card" id="hand">Hand</div>
+        <input type="button" id="drawButton" value="DRAW" onClick="draw()">
+        <div class="card" id="deck">Deck</div>
+    </div>
+
+
+    
+</body>
+</html>

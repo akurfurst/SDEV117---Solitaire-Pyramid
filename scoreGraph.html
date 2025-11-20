@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+</head>
+<body>
+    <canvas id="myChart"></canvas>
+    <a href="index.html">back to game</a>
+    <script>
+        let score = [45, 78, 23, 91, 67, 34, 88, 12, 55, 73, 41, 96, 29, 64, 82, 18, 70, 38, 93, 51, 26, 85, 62, 14, 77, 49, 95, 33, 68, 87];
+        let dates = ["Oct 1", "Oct 2", "Oct 3", "Oct 4", "Oct 5", "Oct 6", "Oct 7", "Oct 8", "Oct 9", "Oct 10", "Oct 11", "Oct 12", "Oct 13", "Oct 14", "Oct 15", "Oct 16", "Oct 17", "Oct 18", "Oct 19", "Oct 20", "Oct 21", "Oct 22", "Oct 23", "Oct 24", "Oct 25", "Oct 26", "Oct 27", "Oct 28", "Oct 29", "Oct 30"];
+        
+        const myChart = new Chart("myChart", {
+            type: "line",
+            data: {
+                labels: dates,
+                datasets: [{
+                    data: score,
+                }]
+            },
+           
+        });
+    </script>
+</body>
+</html>

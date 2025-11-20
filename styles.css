@@ -1,0 +1,67 @@
+body{
+    background-color: grey;
+    font-family: sans-serif;
+    margin: 5%;
+    margin-top: 10px !important;
+}
+
+input{
+    color: lightgrey;
+    background-color: black;
+}
+
+.card{
+    border: 5px solid green;
+    margin: 0px;
+    padding: 0px;
+    padding-top: 10px;
+    text-align: center;
+    width: 85px;
+    height: 150px;
+    background-color: darkred;
+    font-family: sans-serif;
+    color: white;
+    font-size: 15px;
+}
+
+#playerInfoBar{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+#playRow{
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    margin: 20px;
+}
+
+#drawButton{
+    margin: 60px;
+}
+
+.rows{
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin-top: -80px; 
+}
+
+#row1{
+    margin: 0px;
+}
+
+/* Style for matched/removed cards */
+.card.hidden {
+    visibility: hidden;
+}
+
+/* Style for selected cards */
+.card.selected {
+    background-color: yellow !important;
+    border: 5px solid orange !important;
+    color: black !important;
+}
+
