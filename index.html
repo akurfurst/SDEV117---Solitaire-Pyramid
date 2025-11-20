@@ -66,6 +66,9 @@
         }
         //this function starts the game by display the cards on the board and dispaying the top card on the deck
         function start(){
+            //set the username and change the form dispaly to none
+            document.getElementById("player").innerHTML = document.getElementById("username").value;
+            document.getElementById("playerForm").style.display = "none";
             //set the deck
             setDeck();
             //set the board
@@ -381,6 +384,18 @@
         <h1 id="score">Score: 0</h1>
         <h3 id="player">Player: ...</h3>
         <h3>High Score: 0</h3>
+    </div>
+
+    <div id="key">
+        <h3>Possible Matches</h3>
+        <ul>King</ul>
+        <ul>Queen + Ace</ul>
+        <ul>Jack + 2</ul>
+        <ul>10 + 3</ul>
+        <ul>9 + 4</ul>
+        <ul>8 + 5</ul>
+        <ul>7 + 6</ul>
+
     </div>
 
     <div id="row1" class="rows">
